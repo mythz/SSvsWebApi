@@ -17,18 +17,26 @@ namespace aspnet
             BuildWebHost(args).Run();
         }
 
-        public static IWebHost BuildWebHost(string[] args)
-        {
-
-            var host = new WebHostBuilder()
-                .UseKestrel()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
+        public static IWebHost BuildWebHost(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+                .ConfigureLogging((context, logging) => logging.ClearProviders())               
                 .UseStartup<Startup>()
-	        	.UseUrls("http://localhost:3000/")
-            .Build();
+                .Build();
+    }
 
-            return host;
-        }
+    [ServiceStack.Route("/hello")]
+    public class Hello : ServiceStack.IReturn<HelloResponse>
+    {
+        public string Name { get; set; }
+    }
+
+    public class HelloResponse
+    {
+        public string Result { get; set; }
+    }
+
+    public static class Dtos
+    {
+        public static HelloResponse HelloResponse = new HelloResponse { Result = "Hello, World!" };
     }
 }

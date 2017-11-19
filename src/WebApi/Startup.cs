@@ -1,125 +1,41 @@
-﻿using System;
+using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using ServiceStack;
-using ServiceStack.Text;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
-using Funq;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc;
 
 namespace aspnet
 {
     public class Startup
     {
-        public void ConfigureServices(IServiceCollection services) 
+        public void ConfigureServices(IServiceCollection services)
         {
-          // uncomment for WebApi
-           services.AddMvc();
+            services.AddMvc();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-          // uncomment for WebApi
-           app.UseMvc();
-
-          // uncomment for ServiceStack
-           //app.UseServiceStack(new AppHost());
-
-          // **********************************************************
-          // uncomment for aspnet map router w/ newtonsoft serialization
-          // app.Map("", config =>
-          // {
-          //   config.Run(async context =>
-          //   {
-          //     context.Response.ContentType = "application/json";
-          //     await context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(new { hello = "world" }));
-          //   });
-          // });
-
-          // **********************************************************
-          // uncomment for aspnet core raw w/ newtonsoft serialization
-          /* app.Run(async (context) =>
-           {
-               context.Response.ContentType = "application/json";
-               await context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(new HelloWorldResponse()));
-           });
-          */
-          // **********************************************************
-          // uncomment for aspnet core raw w/ servicestack serialization
-          /*app.Run(async (context) =>
-          {
-              context.Response.ContentType = "application/json";
-              await context.Response.WriteAsync(ServiceStack.Text.JsonSerializer.SerializeToString(new HelloWorldResponse()));
-          });*/
-          
+            app.UseMvc();
         }
     }
 
-    public class AppHost : ServiceStack.AppHostBase
+    // (WSL) wrk -c 256 -t 8 -d 10 http://localhost:3000/hello?format=json
+
+    // 38742.63 - 39142.07 Req/Sec
+    public class HelloWorldController : Controller
     {
-        public AppHost() : base("api", typeof(AppHost).Assembly)
-        {
-        }
-
-        public override void Configure(Container container)
-        {
-          /*SetConfig(new HostConfig {
-              DefaultContentType = MimeTypes.Json,
-              EnableFeatures = Feature.All.Remove(Feature.Html)
-          });*/
-
-          // **********************************************************
-          // uncomment for servicestack raw handler implementation
-          // this.RawHttpHandlers.Add(req => {
-          //   if (req.PathInfo == "/") {
-          //     return new ServiceStack.Host.Handlers.CustomActionHandler((r1, res) => {
-          //       res.WriteToResponse(new HelloWorldResponse(), "application/json");
-          //       res.EndHttpHandlerRequest(skipHeaders: false);
-          //     });;
-          //   }
-          //   return null;
-          // });
-        }
+        [Route("/hello")]
+        [HttpGet]
+        public HelloResponse Get(Hello request) => Dtos.HelloResponse;
     }
 
-    public class HelloWorldService: Service
-    {
-      /*public Task<HelloWorldResponse> Get(HelloWorldRequest request)
-      {
-        return Task.FromResult(new HelloWorldResponse());
-      }*/
-
-     public HelloWorldResponse Get(HelloWorldRequest request)
-      {
-        return new HelloWorldResponse();
-      }
-      
-      //public Task<HelloWorldResponse> Any(FallbackRequest request)
-      //{
-      //  return Task.FromResult(new HelloWorldResponse());
-      //}
-      
-      /*public HelloWorldResponse Any(FallbackRequest request)
-      {
-         return new HelloWorldResponse();
-      }*/
-    }
-
-    [ServiceStack.Route("/hello")]
-    public class HelloWorldRequest {}
-
-    public class HelloWorldResponse
-    {
-      public string Hello => "World"; 
-    }
-
-    [FallbackRoute("/{Path*}")]
-    public class FallbackRequest {
-      public string Path { get; set;}
-    }
 }

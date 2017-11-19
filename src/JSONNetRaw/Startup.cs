@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,23 +18,15 @@ namespace aspnet
     {
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseServiceStack(new AppHost());
+            app.Run(async (context) =>
+            {
+                context.Response.ContentType = "application/json";
+
+                // (WSL) wrk -c 256 -t 8 -d 10 http://localhost:3000/hello?format=json
+
+                // 66551.50 - 67209.22 Req/Sec
+                await context.Response.WriteAsync(Newtonsoft.Json.JsonConvert.SerializeObject(Dtos.HelloResponse));
+            });
         }
-    }
-
-    public class AppHost : AppHostBase
-    {
-        public AppHost() : base(nameof(aspnet), typeof(AppHost).Assembly) { }
-
-        public override void Configure(Container container)
-        {
-        }
-    }
-
-    // (WSL) wrk -c 256 -t 8 -d 10 http://localhost:3000/hello?format=json
-    // 40264.34 - 40718.81 Req/Sec
-    public class MyServices : Service
-    {
-        public object Any(Hello request) => Dtos.HelloResponse;
     }
 }

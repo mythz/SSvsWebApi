@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ServiceStack;
+using ServiceStack.Web;
 using ServiceStack.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -23,17 +24,23 @@ namespace aspnet
 
     public class AppHost : AppHostBase
     {
-        public AppHost() : base(nameof(aspnet), typeof(AppHost).Assembly) { }
+        public AppHost() : base(nameof(aspnet), typeof(AppHost).Assembly) {}
 
         public override void Configure(Container container)
         {
-        }
-    }
+            // (WSL) wrk -c 256 -t 8 -d 10 http://localhost:3000/hello?format=json
 
-    // (WSL) wrk -c 256 -t 8 -d 10 http://localhost:3000/hello?format=json
-    // 40264.34 - 40718.81 Req/Sec
-    public class MyServices : Service
-    {
-        public object Any(Hello request) => Dtos.HelloResponse;
+            // 67695.25 - 68397.69 Req/Sec
+            NetCoreHandler = async ctx => {
+                await ctx.Response.WriteAsync(JsonSerializer.SerializeToString(Dtos.HelloResponse));
+                return true;
+            };
+
+            // NetCoreRequestHandler = async req => {
+            //     await req.Response.WriteAsync(JsonSerializer.SerializeToString(Dtos.HelloResponse));
+            //     return true;
+            // };
+            
+        }
     }
 }
